@@ -12,6 +12,7 @@
 #include <iostream>
 #include <iterator>
 #include <numeric>
+#include <limits>
 #include <random>
 #include <string>
 #include <vector>
@@ -77,7 +78,25 @@ void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted,
    *   probably find it useful to implement this method and use it as a helper 
    *   during the updateWeights phase.
    */
+  if (predicted.empty()) {
+    return;
+  }
 
+  for (auto& o : observations) {
+    int nearest_id = -1;
+    double nearest_d2 = std::numeric_limits<double>::max();
+
+    for (const auto& p : predicted) {
+      const double dx = p.x - o.x;
+      const double dy = p.y - o.y;
+      const double d2 = dx * dx + dy * dy;
+      if (d2 < nearest_d2) {
+        nearest_id = p.id;
+      }
+    }
+
+    o.id = nearest_id;
+  }
 }
 
 void ParticleFilter::updateWeights(double sensor_range, double std_landmark[], 
