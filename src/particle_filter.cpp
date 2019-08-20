@@ -19,6 +19,9 @@
 
 #include "helper_functions.h"
 
+
+#define DEBUG
+
 using std::string;
 using std::vector;
 
@@ -123,6 +126,48 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
    *   (look at equation 3.33) http://planning.cs.uiuc.edu/node99.html
    */
 
+  vector<LandmarkObs> map_predicted;
+  for (const auto l : map_landmarks.landmark_list) {
+    map_predicted.push_back(LandmarkObs{l.id_i, l.x_f, l.y_f});
+  }
+
+  for (auto& p : particles) {
+    double weight = 1.0;
+
+    vector<LandmarkObs> map_observations;
+    for (const auto obs : observations) {
+      const double x = p.x + (cos(p.theta) * obs.x) - (sin(p.theta) * obs.y);
+      const double y = p.y + (sin(p.theta) * obs.x) + (cos(p.theta) * obs.y);
+      map_observations.push_back(LandmarkObs{obs.id, x, y});
+    }
+
+    dataAssociation(map_predicted, map_observations);
+
+#ifdef DEBUG
+    std::cout << "observations: ";
+    for (auto l : map_observations) {
+      std::cout << "(" << l.id << ": " << l.x << " " << l.y << ") ";
+    }
+    std::cout << std::endl;
+#endif
+
+    for (const LandmarkObs obs : map_observations) {
+      LandmarkObs assoc;
+      for (const LandmarkObs pred : map_predicted) {
+        if (obs.id == pred.id) {
+          assoc = pred;
+          break;
+        }
+      }
+
+      const double prob = multivariate_prob(std_landmark[0], std_landmark[1],
+                                            obs.x, obs.y,
+                                            assoc.x, assoc.y);
+      weight *= prob;
+    }
+
+    p.weight = weight;
+  }
 }
 
 void ParticleFilter::resample() {
