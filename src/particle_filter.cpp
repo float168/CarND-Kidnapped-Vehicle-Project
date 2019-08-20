@@ -178,6 +178,29 @@ void ParticleFilter::resample() {
    *   http://en.cppreference.com/w/cpp/numeric/random/discrete_distribution
    */
 
+  for (unsigned int i = 0; i < particles.size(); ++i) {
+    weights[i] = particles[i].weight;
+  }
+
+  std::default_random_engine engine;
+  std::discrete_distribution<> sampler(weights.begin(), weights.end());
+
+  vector<Particle> new_particles;
+#ifdef DEBUG
+  std::cout << "resample: ";
+#endif
+  for (unsigned int i = 0; i < particles.size(); ++i) {
+    const int index = sampler(engine);
+    new_particles.push_back(particles[index]);
+#ifdef DEBUG
+    std::cout << index << " ";
+#endif
+  }
+#ifdef DEBUG
+  std::cout << std::endl;
+#endif
+
+  particles = new_particles;
 }
 
 void ParticleFilter::SetAssociations(Particle& particle, 
