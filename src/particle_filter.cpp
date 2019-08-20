@@ -97,6 +97,7 @@ void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted,
       const double dy = p.y - o.y;
       const double d2 = dx * dx + dy * dy;
       if (d2 < nearest_d2) {
+        nearest_d2 = d2;
         nearest_id = p.id;
       }
     }
