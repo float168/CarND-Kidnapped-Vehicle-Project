@@ -20,10 +20,12 @@
 #include "helper_functions.h"
 
 
-#define DEBUG
+//#define DEBUG
 
 using std::string;
 using std::vector;
+
+constexpr double yaw_rate_thresh = 1e-3;
 
 void ParticleFilter::init(double x, double y, double theta, double std[]) {
   /**
@@ -71,9 +73,18 @@ void ParticleFilter::prediction(double delta_t, double std_pos[],
 
   for (auto& p : particles) {
     const double new_theta = p.theta + delta_t * yaw_rate;
-    p.x += velocity / yaw_rate * (sin(new_theta) - sin(p.theta));
-    p.y += velocity / yaw_rate * (cos(p.theta) - cos(new_theta));
+    if (yaw_rate > yaw_rate_thresh) {
+      p.x += velocity / yaw_rate * (sin(new_theta) - sin(p.theta));
+      p.y += velocity / yaw_rate * (cos(p.theta) - cos(new_theta));
+    } else {
+      p.x += velocity * delta_t * cos(p.theta);
+      p.y += velocity * delta_t * sin(p.theta);
+    }
     p.theta = new_theta;
+
+    p.x += distrib_x(gen);
+    p.y += distrib_y(gen);
+    p.theta += distrib_theta(gen);
   }
 }
 
